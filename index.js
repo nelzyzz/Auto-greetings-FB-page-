@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const request = require("request");
+const axios = require("axios");
 
 const app = express();
 app.use(bodyParser.json());
@@ -72,16 +72,15 @@ app.post("/webhook", (req, res) => {
 function getUserName(senderId, callback) {
     const url = `https://graph.facebook.com/${senderId}?fields=first_name,last_name&access_token=${PAGE_ACCESS_TOKEN}`;
 
-    request.get(url, (err, res, body) => {
-        if (!err && res.statusCode === 200) {
-            const data = JSON.parse(body);
-            const username = `${data.first_name} ${data.last_name}`;
+    axios.get(url)
+        .then((response) => {
+            const username = `${response.data.first_name} ${response.data.last_name}`;
             callback(username);
-        } else {
+        })
+        .catch((err) => {
             console.error("Error fetching user info", err);
             callback("User");
-        }
-    });
+        });
 }
 
 // Send Message Function with Image
@@ -102,13 +101,13 @@ function sendMessage(senderId, message) {
         }
     };
 
-    request.post({ uri: url, json: body }, (err, res, body) => {
-        if (!err) {
+    axios.post(url, body)
+        .then(() => {
             console.log("Message sent successfully!");
-        } else {
+        })
+        .catch((err) => {
             console.error("Failed to send message: ", err);
-        }
-    });
+        });
 }
 
 // Start server
