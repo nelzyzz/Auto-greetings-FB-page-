@@ -30,28 +30,33 @@ app.post('/webhook', bodyParser.json(), (req, res) => {
 
     if (data.object === 'page') {
         data.entry.forEach(entry => {
-            const messagingEvent = entry.messaging[0];
-            const senderId = messagingEvent.sender.id;
+            // Make sure entry.messaging is valid before accessing it
+            if (entry.messaging && entry.messaging.length > 0) {
+                const messagingEvent = entry.messaging[0];
+                const senderId = messagingEvent.sender.id;
 
-            // Check if the user clicked 'Get Started' button
-            if (messagingEvent.message && messagingEvent.message.text === 'Get Started') {
-                sendMessageWithImage(senderId, 'Thank you for clicking "Get Started"! How can we assist you today?', 'https://i.ibb.co/2cQVbcb/image.jpg');
-            }
+                // Check if the user clicked 'Get Started' button
+                if (messagingEvent.message && messagingEvent.message.text === 'Get Started') {
+                    sendMessageWithImage(senderId, 'Thank you for clicking "Get Started"! How can we assist you today?', 'https://i.ibb.co/2cQVbcb/image.jpg');
+                }
 
-            // Check if the user liked or followed the page (via postback)
-            if (messagingEvent.postback && messagingEvent.postback.payload === 'follow') {
-                sendMessageWithImage(senderId, 
-                    '🎉 Thank you so much for following our page! We are excited to have you with us. 😊\n\n' +
-                    'Feel free to explore and ask us anything. We’re here to help you in any way we can. 💬', 
-                    'https://i.ibb.co/2cQVbcb/image.jpg');
-            }
+                // Check if the user liked or followed the page (via postback)
+                if (messagingEvent.postback && messagingEvent.postback.payload === 'follow') {
+                    sendMessageWithImage(senderId, 
+                        '🎉 Thank you so much for following our page! We are excited to have you with us. 😊\n\n' +
+                        'Feel free to explore and ask us anything. We’re here to help you in any way we can. 💬', 
+                        'https://i.ibb.co/2cQVbcb/image.jpg');
+                }
 
-            // If the user liked the page (reaction detection)
-            if (messagingEvent.message && messagingEvent.message.text === 'like') {
-                sendMessageWithImage(senderId, 
-                    'Thanks for liking our page! 👍\n\n' +
-                    'We hope you enjoy your experience here. Let us know if you need anything!', 
-                    'https://i.ibb.co/2cQVbcb/image.jpg');
+                // If the user liked the page (reaction detection)
+                if (messagingEvent.message && messagingEvent.message.text === 'like') {
+                    sendMessageWithImage(senderId, 
+                        'Thanks for liking our page! 👍\n\n' +
+                        'We hope you enjoy your experience here. Let us know if you need anything!', 
+                        'https://i.ibb.co/2cQVbcb/image.jpg');
+                }
+            } else {
+                console.error("No messaging data found in the entry.");
             }
         });
     }
