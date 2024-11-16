@@ -77,7 +77,7 @@ function sendMessageWithImage(senderId, message, imageUrl) {
 
     const options = {
         hostname: 'graph.facebook.com',
-        path: `/v11.0/me/messages?access_token=YOUR_PAGE_ACCESS_TOKEN`,
+        path: `/v11.0/me/messages?access_token=EAAn5t0PUOisBO4ZAJt9LUCmUJWmsgiUywnKuGTn55aKADyVWJzVqjuSumB1ZAHgvfDas2ryzH5rdp77PZA655SLHGy8UeVyaDOizBQhSpDGbatIVlZCNnYW7pSdqsqRPQhZCZBlvsez2Ro3D6IGy2epNrNiqMgtY0soCyCsYkbHGbzW7g8a8j7Tz9SpTYi7nUozAZDZD`,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
