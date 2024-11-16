@@ -47,14 +47,14 @@ app.post("/webhook", (req, res) => {
 
     if (body.object === "page") {
         body.entry.forEach((entry) => {
-            entry.changes.forEach((event) => {
+            entry.changes.forEach(async (event) => {
                 const senderId = event.value.sender_id;
-                const username = "User"; // Replace this with API call to get the user's name dynamically
+                const username = await getUsername(senderId);
 
                 // Check for Like or Follow events
                 if (event.field === "feed" && event.value.verb === "add") {
                     const message = getTimeBasedGreeting(username);
-                    sendMessage(senderId, message);
+                    await sendMessage(senderId, message);
                 }
             });
         });
@@ -63,6 +63,17 @@ app.post("/webhook", (req, res) => {
         res.sendStatus(404);
     }
 });
+
+// Fetch username of the person who liked or followed the page
+async function getUsername(userId) {
+    try {
+        const response = await axios.get(`https://graph.facebook.com/${userId}?access_token=${USER_ACCESS_TOKEN}`);
+        return response.data.name; // Get the user's name
+    } catch (error) {
+        console.error("Error fetching username:", error);
+        return "User"; // Fallback if there's an error
+    }
+}
 
 // Function to fetch the Page Access Token using the User Access Token
 async function getPageAccessToken() {
