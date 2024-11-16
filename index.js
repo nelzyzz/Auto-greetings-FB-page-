@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const request = require("request");
 
 const app = express();
 app.use(bodyParser.json());
@@ -50,13 +51,15 @@ app.post("/webhook", (req, res) => {
         body.entry.forEach((entry) => {
             entry.changes.forEach((event) => {
                 const senderId = event.value.sender_id;
-                const username = "User"; // Replace this with API call to get the user's name dynamically
 
-                // Check for Like or Follow events
-                if (event.field === "feed" && event.value.verb === "add") {
-                    const message = getTimeBasedGreeting(username);
-                    sendMessage(senderId, message);
-                }
+                // Make a request to get the user's name
+                getUserName(senderId, (username) => {
+                    // Check for Like or Follow events (adjust the event field as needed)
+                    if (event.field === "subscribed" || event.field === "feed" || event.field === "reaction") {
+                        const message = getTimeBasedGreeting(username);
+                        sendMessage(senderId, message);
+                    }
+                });
             });
         });
         res.status(200).send("EVENT_RECEIVED");
@@ -65,9 +68,24 @@ app.post("/webhook", (req, res) => {
     }
 });
 
+// Function to get user's name
+function getUserName(senderId, callback) {
+    const url = `https://graph.facebook.com/${senderId}?fields=first_name,last_name&access_token=${PAGE_ACCESS_TOKEN}`;
+
+    request.get(url, (err, res, body) => {
+        if (!err && res.statusCode === 200) {
+            const data = JSON.parse(body);
+            const username = `${data.first_name} ${data.last_name}`;
+            callback(username);
+        } else {
+            console.error("Error fetching user info", err);
+            callback("User");
+        }
+    });
+}
+
 // Send Message Function with Image
 function sendMessage(senderId, message) {
-    const request = require("request");
     const url = `https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
 
     const body = {
