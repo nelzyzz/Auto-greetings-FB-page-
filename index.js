@@ -5,11 +5,9 @@ const axios = require("axios");
 const app = express();
 app.use(bodyParser.json());
 
-// Replace this with your Page Access Token
-const PAGE_ACCESS_TOKEN = "EAALmznqNGzYBO7pUnmPTDn9aBzz186BWc9Ri2hhk6RrRZCh7EmiOeJSC4loHslaMfQnAOZB0KayzpDCrnZBpZCLob08El8IZC4eXZBOffu7jmwIKSVQmxXvVPo8ZBCpaycqU9nRtDJvXkEq309MPRyfjmcwBL8TEscPzvIb02xdmcn9WKg3NjZB0cfnv3MbZBNCV8rgZDZD";
-
-// Replace this with the URL of the image you want to send
-const IMAGE_URL = "https://ibb.co/2cQVbcb";
+// Replace this with your User Access Token
+const USER_ACCESS_TOKEN = "EAALmznqNGzYBO5HDUtBBEL1ZCILKSnNX8ISxZCmup7pS8l3Nvr4CNkI7jsc0ASMuEMVc3TqWevILEGrWZCh5CSZBMEmVVRhPTOvY9TBJK5P7rvDgYwmawNik0LfmLFRxVINMT0wKOcQP2XBmMAby6Ul166qRoVqO0nG2CyCeZCUUbLZBn0zb50i7AT70WzmlKZBdPRwuS06oYWetlSWn4odCe4CrQgZD"; // Replace with your User Access Token
+const IMAGE_URL = "https://ibb.co/2cQVbcb"; // Replace this with the image URL you want to send
 
 // Function to generate time-based greetings
 function getTimeBasedGreeting(username) {
@@ -51,15 +49,13 @@ app.post("/webhook", (req, res) => {
         body.entry.forEach((entry) => {
             entry.changes.forEach((event) => {
                 const senderId = event.value.sender_id;
+                const username = "User"; // Replace this with API call to get the user's name dynamically
 
-                // Make a request to get the user's name
-                getUserName(senderId, (username) => {
-                    // Check for Like or Follow events (adjust the event field as needed)
-                    if (event.field === "subscribed" || event.field === "feed" || event.field === "reaction") {
-                        const message = getTimeBasedGreeting(username);
-                        sendMessage(senderId, message);
-                    }
-                });
+                // Check for Like or Follow events
+                if (event.field === "feed" && event.value.verb === "add") {
+                    const message = getTimeBasedGreeting(username);
+                    sendMessage(senderId, message);
+                }
             });
         });
         res.status(200).send("EVENT_RECEIVED");
@@ -68,24 +64,33 @@ app.post("/webhook", (req, res) => {
     }
 });
 
-// Function to get user's name
-function getUserName(senderId, callback) {
-    const url = `https://graph.facebook.com/${senderId}?fields=first_name,last_name&access_token=${PAGE_ACCESS_TOKEN}`;
-
-    axios.get(url)
-        .then((response) => {
-            const username = `${response.data.first_name} ${response.data.last_name}`;
-            callback(username);
-        })
-        .catch((err) => {
-            console.error("Error fetching user info", err);
-            callback("User");
-        });
+// Function to fetch the Page Access Token using the User Access Token
+async function getPageAccessToken() {
+    try {
+        const response = await axios.get(`https://graph.facebook.com/v12.0/me/accounts?access_token=${USER_ACCESS_TOKEN}`);
+        
+        // Extract the Page Access Token from the response
+        if (response.data && response.data.data) {
+            const page = response.data.data[0]; // Assuming you want to use the first page in the list
+            const pageAccessToken = page.access_token;
+            console.log("Page Access Token:", pageAccessToken);
+            return pageAccessToken;
+        }
+    } catch (error) {
+        console.error("Error fetching page access token:", error);
+    }
 }
 
-// Send Message Function with Image
-function sendMessage(senderId, message) {
-    const url = `https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
+// Send Message Function with Image using the Page Access Token
+async function sendMessage(senderId, message) {
+    const pageAccessToken = await getPageAccessToken();
+    
+    if (!pageAccessToken) {
+        console.error("No Page Access Token available");
+        return;
+    }
+
+    const url = `https://graph.facebook.com/v12.0/me/messages?access_token=${pageAccessToken}`;
 
     const body = {
         recipient: { id: senderId },
@@ -101,13 +106,12 @@ function sendMessage(senderId, message) {
         }
     };
 
-    axios.post(url, body)
-        .then(() => {
-            console.log("Message sent successfully!");
-        })
-        .catch((err) => {
-            console.error("Failed to send message: ", err);
-        });
+    try {
+        const response = await axios.post(url, body);
+        console.log("Message sent successfully!");
+    } catch (error) {
+        console.error("Failed to send message: ", error);
+    }
 }
 
 // Start server
