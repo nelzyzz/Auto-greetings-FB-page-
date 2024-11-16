@@ -5,7 +5,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Replace this with your Page Access Token
-const PAGE_ACCESS_TOKEN = "your_page_access_token";
+const PAGE_ACCESS_TOKEN = "EAALmznqNGzYBO7pUnmPTDn9aBzz186BWc9Ri2hhk6RrRZCh7EmiOeJSC4loHslaMfQnAOZB0KayzpDCrnZBpZCLob08El8IZC4eXZBOffu7jmwIKSVQmxXvVPo8ZBCpaycqU9nRtDJvXkEq309MPRyfjmcwBL8TEscPzvIb02xdmcn9WKg3NjZB0cfnv3MbZBNCV8rgZDZD";
 
 // Replace this with the URL of the image you want to send
 const IMAGE_URL = "https://ibb.co/2cQVbcb";
