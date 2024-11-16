@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const request = require('request');
+const https = require('https'); // Ginamit ang built-in na https module ng Node.js
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -35,7 +35,7 @@ app.post('/webhook', bodyParser.json(), (req, res) => {
 
             // Check if the user clicked 'Get Started' button
             if (messagingEvent.message && messagingEvent.message.text === 'Get Started') {
-                sendMessageWithImage(senderId, 'Thank you for clicking "Get Started"! How can we assist you today?', 'https://ibb.co/2cQVbcb');
+                sendMessageWithImage(senderId, 'Thank you for clicking "Get Started"! How can we assist you today?', 'https://i.ibb.co/2cQVbcb/image.jpg');
             }
 
             // Check if the user liked or followed the page (via postback)
@@ -43,7 +43,7 @@ app.post('/webhook', bodyParser.json(), (req, res) => {
                 sendMessageWithImage(senderId, 
                     '🎉 Thank you so much for following our page! We are excited to have you with us. 😊\n\n' +
                     'Feel free to explore and ask us anything. We’re here to help you in any way we can. 💬', 
-                    'https://ibb.co/2cQVbcb');
+                    'https://i.ibb.co/2cQVbcb/image.jpg');
             }
 
             // If the user liked the page (reaction detection)
@@ -51,7 +51,7 @@ app.post('/webhook', bodyParser.json(), (req, res) => {
                 sendMessageWithImage(senderId, 
                     'Thanks for liking our page! 👍\n\n' +
                     'We hope you enjoy your experience here. Let us know if you need anything!', 
-                    'https://ibb.co/2cQVbcb');
+                    'https://i.ibb.co/2cQVbcb/image.jpg');
             }
         });
     }
@@ -61,7 +61,7 @@ app.post('/webhook', bodyParser.json(), (req, res) => {
 
 // Function to send message with image to the user
 function sendMessageWithImage(senderId, message, imageUrl) {
-    const requestBody = {
+    const requestBody = JSON.stringify({
         recipient: { id: senderId },
         message: {
             attachment: {
@@ -73,25 +73,39 @@ function sendMessageWithImage(senderId, message, imageUrl) {
             },
             text: message
         }
-    };
-
-    // Replace with your Facebook Page Access Token
-    const accessToken = 'EAALmznqNGzYBO4dCD4HcpVMKraEuDuR0Mw2sgR8Fy4MIhRyrPNW2cwEbSQR55RUA2oIbxNabCuyvHHqLsg9B0nNxRyu6B37F94ZB9tokf5sp2H4Eem2EOjDyqIfUrZBZBqs0hUsvhSXZAjjiUqKgTRUJgsv1TajtZBtnqpIZAIWP7vUkZAobBPZC4tgVZBZBxACfZCnUAZDZD';
-
-    const requestOptions = {
-        method: 'POST',
-        uri: 'https://graph.facebook.com/v11.0/me/messages',
-        qs: { access_token: accessToken },
-        json: requestBody
-    };
-
-    request(requestOptions, (error, response, body) => {
-        if (error) {
-            console.error('Error sending message: ', error);
-        } else {
-            console.log('Message sent: ', body);
-        }
     });
+
+    const options = {
+        hostname: 'graph.facebook.com',
+        path: `/v11.0/me/messages?access_token=YOUR_PAGE_ACCESS_TOKEN`,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(requestBody)
+        }
+    };
+
+    const req = https.request(options, (res) => {
+        let data = '';
+        
+        // A chunk of data has been received.
+        res.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        // The whole response has been received.
+        res.on('end', () => {
+            console.log('Message sent: ', data);
+        });
+    });
+
+    req.on('error', (error) => {
+        console.error('Error sending message: ', error);
+    });
+
+    // Write the request body to the request
+    req.write(requestBody);
+    req.end();
 }
 
 // Start the server
