@@ -28,7 +28,7 @@ function getTimeBasedGreeting(username) {
 
 // Webhook verification (required by Facebook)
 app.get("/webhook", (req, res) => {
-    const VERIFY_TOKEN = "your_verify_token";
+    const VERIFY_TOKEN = "page";
 
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
